@@ -1154,14 +1154,16 @@ const ADMIN_PASS ='Mthandos15#';
 const CLOUD_KEY_RE=/^(raMentors|raClients|raEAs|raKeys|raMt|raSeeded|raHistory_|raRunning_|raNotifSeen_|raScanHistory_|raScanUsage_)/;
 const __rawSet = localStorage.setItem.bind(localStorage);
 let __cloudQueue = Promise.resolve();
+let __cloudOff = false; /* set once the server is confirmed absent: stops retry noise */
 function cloudToken(){ try{ return localStorage.getItem('raToken')||''; }catch(e){ return ''; } }
 function cloudPush(key, rawValue){
+  if(__cloudOff) return Promise.resolve();
   let parsed; try{ parsed = JSON.parse(rawValue); }catch(e){ parsed = rawValue; }
   __cloudQueue = __cloudQueue.then(function(){
     return fetch('/api/public/state',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ key:key, value:parsed, token:cloudToken() })
-    }).catch(function(){ /* offline: the local mirror keeps the app usable */ });
+    }).then(function(r){ if(r.status===404) __cloudOff = true; }).catch(function(){ /* offline: the local mirror keeps the app usable */ });
   }).catch(function(){});
   return __cloudQueue;
 }
@@ -1170,8 +1172,10 @@ localStorage.setItem = function(k,v){
   if(CLOUD_KEY_RE.test(String(k))){ try{ cloudPush(String(k), String(v)); }catch(e){} }
 };
 async function cloudHydrate(){
+  if(__cloudOff) return false;
   try{
     const res = await fetch('/api/public/state',{cache:'no-store'});
+    if(res.status===404){ __cloudOff = true; return false; }
     const data = await res.json();
     if(!data||!data.ok) return false;
     const state = data.state||{};
@@ -1213,7 +1217,7 @@ function localLogin(payload){
 async function cloudLogin(payload){
   const local=localLogin(payload);
   try{
-    fetch('/api/public/auth/login',{
+    if(!__cloudOff) fetch('/api/public/auth/login',{
       method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
     }).then(function(r){ return r.json(); }).then(function(res){
       if(res&&res.ok) cloudStoreSession(res);
