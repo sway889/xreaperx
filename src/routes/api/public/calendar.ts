@@ -25,7 +25,15 @@ export const Route = createFileRoute("/api/public/calendar")({
   server: {
     handlers: {
       GET: async () => {
-        const events: Array<Record<string, string>> = [];
+        type OutEvent = {
+          title: string;
+          country: string;
+          date: string;
+          impact: string;
+          forecast: string;
+          previous: string;
+        };
+        const events: OutEvent[] = [];
 
         for (const url of FEEDS) {
           try {
