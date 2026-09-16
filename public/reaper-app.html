@@ -582,7 +582,9 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
     <div class="role-tabs" id="loginRoleTabs">
       <button type="button" class="role-tab active" onclick="setRole('client',this)">Client</button>
       <button type="button" class="role-tab" onclick="setRole('mentor',this)">Mentor</button>
-      <button type="button" class="role-tab" onclick="setRole('owner',this)">Owner</button>
+      <button type="button" class="role-tab" data-role="owner" onclick="setRole('owner',this)">Owner</button>
+      <button type="button" class="role-tab" data-role="key" onclick="setRole('key',this)">License key</button>
+
     </div>
     <div class="role-tabs hidden" id="regRoleTabs">
       <button type="button" class="role-tab active" onclick="setRole('client',this)">Client</button>
