@@ -132,8 +132,72 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Bridges the browser's "Install app" prompt to the app UI, which renders
+ * inside an iframe and therefore cannot receive the event itself.
+ */
+function useInstallPromptBridge() {
+  useEffect(() => {
+    let deferred: any = null;
+
+    const broadcast = () => {
+      const frames = document.querySelectorAll("iframe");
+      frames.forEach((f) => {
+        (f as HTMLIFrameElement).contentWindow?.postMessage(
+          { type: "ra-install-available", available: !!deferred },
+          "*",
+        );
+      });
+    };
+
+    const onBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      deferred = e;
+      broadcast();
+    };
+
+    const onInstalled = () => {
+      deferred = null;
+      broadcast();
+    };
+
+    const onMessage = async (e: MessageEvent) => {
+      const data = e.data as { type?: string } | null;
+      if (!data || typeof data !== "object") return;
+      if (data.type === "ra-install-query") {
+        broadcast();
+        return;
+      }
+      if (data.type === "ra-install-request") {
+        if (!deferred) {
+          broadcast();
+          return;
+        }
+        try {
+          await deferred.prompt();
+          await deferred.userChoice;
+        } catch {
+          /* user dismissed */
+        }
+        deferred = null;
+        broadcast();
+      }
+    };
+
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+      window.removeEventListener("message", onMessage);
+    };
+  }, []);
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useInstallPromptBridge();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -142,3 +206,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
