@@ -3,26 +3,635 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reaper AI Scanner</title>
-    <meta http-equiv="refresh" content="0; url=./reaper-app.html" />
+    <title>ReaperX | Official AI Scanner Platform</title>
+    <meta
+      name="description"
+      content="ReaperX is the official AI chart scanning and license platform for mentors and clients. Launch your app, manage licenses, and track broker-connected automation securely."
+    />
     <style>
-      html, body {
-        margin: 0;
-        height: 100%;
-        background: #08080c;
-        color: #eef0f6;
-        font-family: Arial, sans-serif;
+      :root {
+        --bg: #070b13;
+        --bg-soft: #0d1520;
+        --panel: rgba(17, 26, 38, 0.9);
+        --panel-strong: #101b2a;
+        --border: rgba(255, 255, 255, 0.09);
+        --text: #edf3ff;
+        --text-soft: #a5b2c8;
+        --primary: #7c6ef3;
+        --primary-strong: #5b4ae4;
+        --accent: #7ee0c9;
+        --success: #3ddc97;
+        --warning: #f3c969;
+        --shadow: rgba(23, 34, 48, 0.45);
       }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top, rgba(124, 110, 243, 0.22), transparent 30%),
+          linear-gradient(180deg, var(--bg), var(--bg-soft));
+        color: var(--text);
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        line-height: 1.6;
+      }
+
+      a { color: inherit; text-decoration: none; }
+      img { max-width: 100%; }
+      .container {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(12px);
+        background: rgba(7, 11, 19, 0.72);
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 72px;
+        gap: 20px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .brand-mark {
+        width: 38px;
+        height: 38px;
         display: grid;
         place-items: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: #0b1120;
+        font-weight: 900;
       }
-      a {
-        color: #8b5cf6;
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        color: var(--text-soft);
+        font-size: 0.92rem;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 0.9rem 1.35rem;
+        font-weight: 700;
+        transition: 0.2s ease;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+        color: white;
+        box-shadow: 0 18px 30px rgba(91, 74, 228, 0.35);
+      }
+
+      .btn-primary:hover { transform: translateY(-1px); }
+      .btn-secondary {
+        border-color: var(--border);
+        background: rgba(255,255,255,0.02);
+        color: var(--text);
+      }
+
+      .hero {
+        padding: 72px 0 46px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        align-items: center;
+        gap: 44px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(126, 224, 201, 0.34);
+        background: rgba(126, 224, 201, 0.08);
+        color: var(--accent);
+        padding: 0.45rem 0.8rem;
+        font-weight: 700;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-size: clamp(2.8rem, 5vw, 5rem);
+        line-height: 0.98;
+        letter-spacing: -0.06em;
+        margin: 1rem 0 1rem;
+      }
+
+      .lead {
+        max-width: 620px;
+        color: var(--text-soft);
+        font-size: 1.08rem;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin: 28px 0 18px;
+      }
+
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px;
+        margin-top: 20px;
+      }
+
+      .stat {
+        min-width: 120px;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 1.7rem;
+        letter-spacing: -0.05em;
+      }
+
+      .stat span {
+        color: var(--text-soft);
+        font-size: 0.82rem;
+      }
+
+      .hero-card {
+        position: relative;
+        border-radius: 28px;
+        background: linear-gradient(180deg, rgba(15,22,34,0.88), rgba(13,19,28,0.96));
+        border: 1px solid var(--border);
+        box-shadow: 0 30px 80px var(--shadow);
+        padding: 20px;
+      }
+
+      .dashboard {
+        border-radius: 22px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        background: rgba(10, 16, 24, 0.9);
+      }
+
+      .dashboard-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 18px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.42rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border-radius: 999px;
+        border: 1px solid rgba(61, 220, 151, 0.28);
+        background: rgba(61, 220, 151, 0.08);
+        color: var(--success);
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .dashboard-body {
+        padding: 18px;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .mini-box {
+        flex: 1;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .mini-value {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+      }
+
+      .mini-label {
+        color: var(--text-soft);
+        font-size: 0.75rem;
+      }
+
+      .chart {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 10px;
+        align-items: end;
+        height: 130px;
+        padding-top: 16px;
+      }
+
+      .bar {
+        background: linear-gradient(180deg, var(--primary), rgba(124, 110, 243, 0.25));
+        border-radius: 10px 10px 0 0;
+        min-height: 16px;
+      }
+
+      section {
+        padding: 28px 0 18px;
+      }
+
+      .section-heading {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .section-heading h2 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 4vw, 3rem);
+        letter-spacing: -0.05em;
+      }
+
+      .section-heading p {
+        margin: 0 auto;
+        color: var(--text-soft);
+        max-width: 640px;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+      }
+
+      .card {
+        background: rgba(14, 21, 31, 0.76);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 24px;
+      }
+
+      .icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(124, 110, 243, 0.12);
+        color: var(--primary);
+        font-weight: 800;
+        margin-bottom: 16px;
+      }
+
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 1.2rem;
+      }
+
+      .card p, .list li, .price-copy {
+        color: var(--text-soft);
+      }
+
+      .platform {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 24px;
+        align-items: center;
+      }
+
+      .list {
+        list-style: none;
+        padding: 0;
+        margin: 22px 0 0;
+        display: grid;
+        gap: 12px;
+      }
+
+      .list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .check {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(61, 220, 151, 0.12);
+        color: var(--success);
+        display: inline-grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .pricing {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+      }
+
+      .price-card {
+        background: rgba(14, 21, 31, 0.76);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 24px;
+      }
+
+      .price-card.featured {
+        border-color: rgba(124,110,243,0.54);
+        transform: translateY(-4px);
+        box-shadow: 0 24px 50px rgba(91, 74, 228, 0.14);
+      }
+
+      .tag {
+        display: inline-block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        padding: 0.42rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(126, 224, 201, 0.08);
+        border: 1px solid rgba(126, 224, 201, 0.2);
+      }
+
+      .price {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        margin: 18px 0 6px;
+        font-weight: 800;
+      }
+
+      .price strong {
+        font-size: 2.6rem;
+        letter-spacing: -0.06em;
+      }
+
+      .cta-box {
+        margin-top: 40px;
+        text-align: center;
+      }
+
+      .footer {
+        border-top: 1px solid var(--border);
+        padding: 26px 0 42px;
+        margin-top: 32px;
+        color: var(--text-soft);
+      }
+
+      .footer-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid,
+        .platform,
+        .features,
+        .pricing {
+          grid-template-columns: 1fr;
+        }
+
+        .nav-links {
+          display: none;
+        }
       }
     </style>
   </head>
   <body>
-    <p>Redirecting to the app… <a href="./reaper-app.html">Open it now</a></p>
+    <header class="topbar">
+      <div class="container nav">
+        <a href="#top" class="brand" aria-label="ReaperX home">
+          <span class="brand-mark">R</span>
+          <span>ReaperX</span>
+        </a>
+
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="#features">Features</a>
+          <a href="#platform">Platform</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#contact">Contact</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="btn btn-secondary" href="./reaper-app.html">Open app</a>
+          <a class="btn btn-primary" href="#pricing">Get started</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="top" class="container hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">Official AI trading platform</div>
+          <h1>Launch smarter licensing and chart scanning.</h1>
+          <p class="lead">
+            ReaperX helps mentors and clients connect broker accounts, activate licenses,
+            and scan markets with AI-driven intelligence in one secure platform.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="./reaper-app.html">Launch platform</a>
+            <a class="btn btn-secondary" href="#features">Explore features</a>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <strong>4.9/5</strong>
+              <span>Mentor satisfaction</span>
+            </div>
+            <div class="stat">
+              <strong>24/7</strong>
+              <span>Market monitoring</span>
+            </div>
+            <div class="stat">
+              <strong>99.9%</strong>
+              <span>Platform uptime</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-card" aria-label="Platform dashboard preview">
+          <div class="dashboard">
+            <div class="dashboard-top">
+              <strong>ReaperX command center</strong>
+              <span class="pill"><span class="dot"></span> Live</span>
+            </div>
+            <div class="dashboard-body">
+              <div class="row">
+                <div class="mini-box">
+                  <div class="mini-value">84</div>
+                  <div class="mini-label">Active licenses</div>
+                </div>
+                <div class="mini-box">
+                  <div class="mini-value">12</div>
+                  <div class="mini-label">Broker links</div>
+                </div>
+              </div>
+
+              <div class="chart" aria-hidden="true">
+                <span class="bar" style="height: 35%"></span>
+                <span class="bar" style="height: 58%"></span>
+                <span class="bar" style="height: 42%"></span>
+                <span class="bar" style="height: 66%"></span>
+                <span class="bar" style="height: 79%"></span>
+                <span class="bar" style="height: 62%"></span>
+                <span class="bar" style="height: 91%"></span>
+                <span class="bar" style="height: 75%"></span>
+                <span class="bar" style="height: 88%"></span>
+                <span class="bar" style="height: 96%"></span>
+                <span class="bar" style="height: 70%"></span>
+                <span class="bar" style="height: 100%"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Everything mentors and clients need</h2>
+          <p>
+            A secure and streamlined workflow for access control, AI analysis, and operational visibility.
+          </p>
+        </div>
+
+        <div class="features">
+          <article class="card">
+            <div class="icon">AI</div>
+            <h3>AI-powered scanning</h3>
+            <p>Run controlled chart analysis with license-protected access and clear decision support.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon">LK</div>
+            <h3>License management</h3>
+            <p>Issue, validate, and track product keys without friction across mentor and client accounts.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon">BR</div>
+            <h3>Broker connectivity</h3>
+            <p>Connect trader workflows and manage account access from a single, private control layer.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="platform">
+      <div class="container platform">
+        <div>
+          <div class="eyebrow">Built for scale</div>
+          <h2 style="margin: 14px 0 14px; font-size: clamp(2rem, 3vw, 3rem); letter-spacing: -0.05em;">A polished platform your users can trust.</h2>
+          <p class="lead" style="max-width: 560px;">
+            ReaperX combines secure onboarding, account management, and automation telemetry in one official web experience.
+          </p>
+          <ul class="list">
+            <li><span class="check">✓</span> Centralized mentor and client dashboard</li>
+            <li><span class="check">✓</span> Secure login and license validation flow</li>
+            <li><span class="check">✓</span> Clean experience designed for modern web deployment</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="mini-box" style="margin-bottom: 14px;">
+            <div class="mini-label">Platform status</div>
+            <div class="mini-value" style="font-size: 1.8rem;">Operational</div>
+          </div>
+          <div class="mini-box">
+            <div class="mini-label">Security layer</div>
+            <div class="mini-value" style="font-size: 1.8rem;">Protected</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Simple plans for growth</h2>
+          <p>Start with a focused package and expand your client access as your network grows.</p>
+        </div>
+
+        <div class="pricing">
+          <article class="price-card">
+            <span class="tag">Starter</span>
+            <div class="price"><strong>$39</strong><span>/mo</span></div>
+            <p class="price-copy">For independent mentors launching their first client program.</p>
+          </article>
+
+          <article class="price-card featured">
+            <span class="tag">Growth</span>
+            <div class="price"><strong>$99</strong><span>/mo</span></div>
+            <p class="price-copy">For scaling operations with multi-client access and platform automation.</p>
+          </article>
+
+          <article class="price-card">
+            <span class="tag">Pro</span>
+            <div class="price"><strong>$199</strong><span>/mo</span></div>
+            <p class="price-copy">For larger mentorship operations and broker-connected client groups.</p>
+          </article>
+        </div>
+
+        <div class="cta-box">
+          <a class="btn btn-primary" href="./reaper-app.html">Open the app</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer" id="contact">
+      <div class="container footer-inner">
+        <div>
+          <strong>ReaperX</strong> — official web platform
+        </div>
+        <div>support@reaperx.com</div>
+      </div>
+    </footer>
   </body>
 </html>
