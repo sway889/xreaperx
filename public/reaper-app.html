@@ -591,7 +591,20 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
       <button type="button" class="role-tab" onclick="setRole('mentor',this)">Mentor</button>
     </div>
 
+    <div id="loginKey" class="hidden">
+      <div class="auth-title">Activate with license key</div>
+      <div class="auth-sub">Enter the key your mentor gave you — no password needed on this device.</div>
+      <div id="loginKeyErr" class="err hidden"></div>
+      <div class="field"><label>LICENSE KEY</label><input class="inp license-key-inp" type="text" id="lkKey" placeholder="XXX-000-000-000" onkeypress="if(event.key==='Enter')doKeyLogin()"></div>
+      <div id="lkFirstRun" class="hidden">
+        <div class="field"><label>YOUR NAME</label><input class="inp" type="text" id="lkName" placeholder="Full name"></div>
+        <div class="field"><label>EMAIL</label><input class="inp" type="email" id="lkEmail" placeholder="you@example.com"></div>
+      </div>
+      <button type="button" class="btn btn-primary btn-block btn-md" onclick="doKeyLogin()">Unlock scanner</button>
+    </div>
+
     <div id="loginClient">
+
       <div class="auth-title">Client login</div>
       <div class="auth-sub">Sign in with your email and mentor ID</div>
       <div id="loginClientErr" class="err hidden"></div>
