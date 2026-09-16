@@ -1337,25 +1337,29 @@ window.switchTab = function switchTab(t){
 function setRole(role,btn){ authRole=role; syncRoleTabs(); renderAuthView(); }
 function syncRoleTabs(){
   qsa((authMode==='login'?'#loginRoleTabs':'#regRoleTabs')+' .role-tab').forEach(b=>{
-    b.classList.toggle('active', b.textContent.trim().toLowerCase()===authRole);
+    const r=(b.dataset&&b.dataset.role)?b.dataset.role:b.textContent.trim().toLowerCase();
+    b.classList.toggle('active', r===authRole);
   });
 }
 function renderAuthView(){
-  ['loginClient','loginMentor','loginOwner','regClient','regMentor','pendingBox'].forEach(id=>qs('#'+id).classList.add('hidden'));
+  ['loginClient','loginMentor','loginOwner','loginKey','regClient','regMentor','pendingBox'].forEach(id=>{ const el=qs('#'+id); if(el) el.classList.add('hidden'); });
   clearAuthErrs();
   if(authMode==='login'){
     if(authRole==='client') qs('#loginClient').classList.remove('hidden');
     if(authRole==='mentor') qs('#loginMentor').classList.remove('hidden');
     if(authRole==='owner') qs('#loginOwner').classList.remove('hidden');
+    if(authRole==='key') qs('#loginKey').classList.remove('hidden');
     qs('#authSwitchLine').innerHTML="No account? <a href=\"javascript:void(0)\" onclick=\"switchTab('register')\">Sign up</a>";
     qs('#authSwitchLine').classList.remove('hidden');
   } else {
+    if(authRole==='key') authRole='client';
     if(authRole==='client') qs('#regClient').classList.remove('hidden');
     if(authRole==='mentor') qs('#regMentor').classList.remove('hidden');
     qs('#authSwitchLine').innerHTML="Have an account? <a href=\"javascript:void(0)\" onclick=\"switchTab('login')\">Log in</a>";
     qs('#authSwitchLine').classList.remove('hidden');
   }
 }
+
 function clearAuthErrs(){ qsa('.err').forEach(e=>e.classList.add('hidden')); }
 function showErr(el,msg){ el.textContent=msg; el.classList.remove('hidden'); }
 
