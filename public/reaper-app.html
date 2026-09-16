@@ -467,6 +467,33 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
     </div>
   </section>
 
+  <section class="section" id="getapp">
+    <h2>Get the mobile app</h2>
+    <p class="section-lead">Install Reaper AI on your Android phone or iPhone and open your scanner straight from your home screen — no browser login needed. Just your license key.</p>
+    <div class="getapp-wrap">
+      <div class="getapp-card">
+        <div class="getapp-badge">STEP 1</div>
+        <h3>Install the app</h3>
+        <p id="installHint">Tap install below. On Android it installs in a few seconds. On iPhone, open this page in Safari, tap Share, then <strong>Add to Home Screen</strong>.</p>
+        <button type="button" class="btn btn-primary btn-block btn-md" id="btnInstallApp" onclick="requestInstall()">Install Reaper AI app</button>
+        <div class="getapp-plat">
+          <span class="getapp-chip">Android</span>
+          <span class="getapp-chip">iPhone &amp; iPad</span>
+          <span class="getapp-chip">Works offline-ready home screen icon</span>
+        </div>
+      </div>
+      <div class="getapp-card">
+        <div class="getapp-badge gold-tag">STEP 2</div>
+        <h3>Activate with your key</h3>
+        <p>Open the installed app and enter the license key your mentor gave you. The app remembers it on that device, so you go straight to the scanner next time.</p>
+        <button type="button" class="btn btn-gold btn-block btn-md" onclick="showAuth('login','key')">Activate with license key</button>
+        <div class="getapp-plat"><span class="getapp-chip">No password needed</span><span class="getapp-chip">One key, one device</span></div>
+      </div>
+    </div>
+  </section>
+
+
+
   <section class="section" id="features">
     <h2>Built for three roles, one platform</h2>
     <p class="section-lead">Owners approve access, mentors brand their EA, clients trade with it.</p>
