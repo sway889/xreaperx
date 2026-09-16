@@ -1441,7 +1441,7 @@ async function doOwnerLogin(){
   session={role:'owner',email:res.account.email};
   showPage('pgAdmin'); initAdmin();
 }
-function doLogout(){ session=null; cloudClearSession(); showPage('pgLanding'); }
+function doLogout(){ session=null; cloudClearSession(); try{ localStorage.removeItem('raDeviceKey'); }catch(e){} showPage(isStandaloneApp()?'pgAuth':'pgLanding'); if(isStandaloneApp()) showAuth('login','key'); }
 
 function doActivateLicense(){
   const raw=qs('#licenseInput').value.trim().toUpperCase();
