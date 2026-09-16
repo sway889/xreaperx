@@ -2372,16 +2372,112 @@ loadAppearance();
 loadVisionSettings();
 
 const urlParams = new URLSearchParams(window.location.search);
-if(urlParams.get('mode')==='app'){
+/* ════ INSTALLED-APP / LICENSE-KEY ACCESS ════ */
+function isStandaloneApp(){
+  try{
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone===true ||
+           (window.parent!==window && window.parent.matchMedia &&
+            window.parent.matchMedia('(display-mode: standalone)').matches);
+  }catch(e){ return false; }
+}
+let __installReady=false;
+window.requestInstall = function requestInstall(){
+  const hint=qs('#installHint');
+  if(isStandaloneApp()){
+    if(hint) hint.textContent='The app is already installed on this device. Enter your license key below to unlock the scanner.';
+    showAuth('login','key');
+    return;
+  }
+  try{ window.parent.postMessage({type:'ra-install-request'},'*'); }catch(e){}
+  setTimeout(function(){
+    if(!__installReady && hint){
+      const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+      hint.innerHTML = ios
+        ? 'On iPhone/iPad: tap the <strong>Share</strong> button in Safari, then <strong>Add to Home Screen</strong>. Reaper AI appears as an app icon.'
+        : 'Open your browser menu and tap <strong>Install app</strong> or <strong>Add to Home screen</strong> to install Reaper AI.';
+    }
+  }, 700);
+}
+window.addEventListener('message', function(e){
+  const d=e.data;
+  if(d && d.type==='ra-install-available'){
+    __installReady=!!d.available;
+    const btn=qs('#btnInstallApp');
+    if(btn) btn.textContent = __installReady ? 'Install Reaper AI app' : 'How to install on this device';
+  }
+});
+try{ window.parent.postMessage({type:'ra-install-query'},'*'); }catch(e){}
+
+window.doKeyLogin = function doKeyLogin(){
+  const raw=(qs('#lkKey').value||'').trim().toUpperCase();
+  const err=qs('#loginKeyErr'); err.classList.add('hidden');
+  if(!raw){ showErr(err,'Enter your license key.'); return; }
+  const keys=getKeys();
+  const kIdx=keys.findIndex(k=>k.key===raw);
+  if(kIdx<0){ showErr(err,'That license key does not exist. Check it with your mentor.'); return; }
+  const key=keys[kIdx];
+  if(key.status==='revoked'){ showErr(err,'This license key has been revoked. Contact your mentor.'); return; }
+  const clients=getClients();
+  let idx = key.clientEmail ? clients.findIndex(c=>String(c.email||'').toLowerCase()===String(key.clientEmail).toLowerCase()) : -1;
+  if(idx<0){
+    const email=((qs('#lkEmail')||{}).value||'').trim().toLowerCase();
+    const name=((qs('#lkName')||{}).value||'').trim();
+    if(!email){
+      qs('#lkFirstRun').classList.remove('hidden');
+      showErr(err,'First activation on this device — add your name and email so your mentor can see you.');
+      return;
+    }
+    if(key.clientEmail && email!==String(key.clientEmail).toLowerCase()){
+      showErr(err,'This key is assigned to '+key.clientEmail+'. Use that email.'); return;
+    }
+    idx = clients.findIndex(c=>String(c.email||'').toLowerCase()===email);
+    if(idx<0){
+      clients.push({id:uid(),name:name||email.split('@')[0],email:email,pass:'',mentorId:key.mentorId,
+        status:'active',joined:new Date().toISOString(),licenseKey:null,eaId:null,activated:false,symbolPrefs:{}});
+      idx=clients.length-1;
+    }
+  }
+  const client=clients[idx];
+  if(client.status==='suspended'){ showErr(err,'This account is suspended. Contact your mentor.'); return; }
+  key.status='used'; key.clientEmail=client.email; key.clientName=client.name;
+  if(!key.usedAt) key.usedAt=new Date().toISOString();
+  keys[kIdx]=key; saveKeys(keys);
+  client.licenseKey=raw; client.eaId=key.eaId; client.activated=true;
+  if(client.status==='pending') client.status='active';
+  clients[idx]=client; saveClients(clients);
+  try{ localStorage.setItem('raDeviceKey',raw); }catch(e){}
+  session={role:'client',email:client.email};
+  qs('#lkKey').value='';
+  enterClientApp(client);
+}
+function tryDeviceResume(){
+  let raw=''; try{ raw=localStorage.getItem('raDeviceKey')||''; }catch(e){}
+  if(!raw) return false;
+  const key=getKeys().find(k=>k.key===raw);
+  if(!key || key.status==='revoked' || !key.clientEmail) return false;
+  const client=getClients().find(c=>String(c.email||'').toLowerCase()===String(key.clientEmail).toLowerCase());
+  if(!client || client.status==='suspended' || !client.activated) return false;
+  session={role:'client',email:client.email};
+  enterClientApp(client);
+  return true;
+}
+
+if(urlParams.get('mode')==='app' || isStandaloneApp()){
   document.title='Reaper AI Scanner — App';
-  showPage('pgAuth'); showAuth('login','client');
+  showPage('pgAuth'); showAuth('login','key');
 } else {
   showPage('pgLanding');
 }
 
 // Pull every saved account, EA, license key and history entry from the cloud
 // before anything is rendered, then seed demo data only on a truly empty platform.
-cloudHydrate().then(function(){ seedDemoDataIfEmpty(); }).catch(function(){ seedDemoDataIfEmpty(); });
+cloudHydrate().then(afterBoot).catch(afterBoot);
+function afterBoot(){
+  seedDemoDataIfEmpty();
+  if(!session) tryDeviceResume();
+}
+
 
 // Visual confirmation that JS is alive (tiny indicator, removed after 3s)
 (function(){
