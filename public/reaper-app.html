@@ -2384,7 +2384,12 @@ function isStandaloneApp(){
   }catch(e){ return false; }
 }
 function isAppMode(){
-  try{ return urlParams.get('mode')==='app' || isStandaloneApp(); }catch(e){ return false; }
+  try{
+    if(urlParams.get('mode')==='app') return true;
+    if(window.parent!==window && window.parent.location &&
+       new URLSearchParams(window.parent.location.search).get('mode')==='app') return true;
+  }catch(e){}
+  return isStandaloneApp();
 }
 let __installReady=false;
 window.requestInstall = function requestInstall(){
