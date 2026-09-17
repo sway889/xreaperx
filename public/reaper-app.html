@@ -502,8 +502,8 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
       <div class="getapp-card">
         <div class="getapp-badge gold-tag">STEP 2</div>
         <h3>Activate with your key</h3>
-        <p>Open the installed app and enter the license key your mentor gave you. The app remembers it on that device, so you go straight to the scanner next time.</p>
-        <button type="button" class="btn btn-gold btn-block btn-md" onclick="showAuth('login','key')">Activate with license key</button>
+        <p>Open the installed app and enter the license key your mentor gave you. The app remembers it on that device, so you go straight to the scanner next time. Key activation only appears inside the installed app.</p>
+        <button type="button" class="btn btn-gold btn-block btn-md" onclick="requestInstall()">Install first, then activate</button>
         <div class="getapp-plat"><span class="getapp-chip">No password needed</span><span class="getapp-chip">One key, one device</span></div>
       </div>
     </div>
@@ -598,7 +598,7 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
       <button type="button" class="role-tab active" onclick="setRole('client',this)">Client</button>
       <button type="button" class="role-tab" onclick="setRole('mentor',this)">Mentor</button>
       <button type="button" class="role-tab" data-role="owner" onclick="setRole('owner',this)">Owner</button>
-      <button type="button" class="role-tab" data-role="key" onclick="setRole('key',this)">License key</button>
+      <button type="button" class="role-tab hidden" id="roleTabKey" data-role="key" onclick="setRole('key',this)">License key</button>
 
     </div>
     <div class="role-tabs hidden" id="regRoleTabs">
@@ -1344,6 +1344,8 @@ function syncRoleTabs(){
 function renderAuthView(){
   ['loginClient','loginMentor','loginOwner','loginKey','regClient','regMentor','pendingBox'].forEach(id=>{ const el=qs('#'+id); if(el) el.classList.add('hidden'); });
   clearAuthErrs();
+  const keyTab=qs('#roleTabKey'); if(keyTab) keyTab.classList.toggle('hidden', !isAppMode());
+  if(authRole==='key' && !isAppMode()){ authRole='client'; syncRoleTabs(); }
   if(authMode==='login'){
     if(authRole==='client') qs('#loginClient').classList.remove('hidden');
     if(authRole==='mentor') qs('#loginMentor').classList.remove('hidden');
@@ -2380,6 +2382,9 @@ function isStandaloneApp(){
            (window.parent!==window && window.parent.matchMedia &&
             window.parent.matchMedia('(display-mode: standalone)').matches);
   }catch(e){ return false; }
+}
+function isAppMode(){
+  try{ return urlParams.get('mode')==='app' || isStandaloneApp(); }catch(e){ return false; }
 }
 let __installReady=false;
 window.requestInstall = function requestInstall(){
