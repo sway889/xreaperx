@@ -76,30 +76,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1, viewport-fit=cover",
-      },
-      { title: "Reaper AI Scanner" },
-      {
-        name: "description",
-        content:
-          "Install the Reaper AI Scanner app on Android or iPhone and activate it with your license key.",
-      },
-      { name: "author", content: "Reaper AI" },
-      { name: "theme-color", content: "#08080c" },
-      { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "Reaper AI" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { property: "og:title", content: "Reaper AI Scanner" },
-      {
-        property: "og:description",
-        content:
-          "Install the Reaper AI Scanner app on Android or iPhone and activate it with your license key.",
-      },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Lovable App" },
+      { name: "description", content: "Lovable Generated Project" },
+      { name: "author", content: "Lovable" },
+      { property: "og:title", content: "Lovable App" },
+      { property: "og:description", content: "Lovable Generated Project" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -107,11 +92,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
   }),
-
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -132,72 +114,8 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * Bridges the browser's "Install app" prompt to the app UI, which renders
- * inside an iframe and therefore cannot receive the event itself.
- */
-function useInstallPromptBridge() {
-  useEffect(() => {
-    let deferred: any = null;
-
-    const broadcast = () => {
-      const frames = document.querySelectorAll("iframe");
-      frames.forEach((f) => {
-        (f as HTMLIFrameElement).contentWindow?.postMessage(
-          { type: "ra-install-available", available: !!deferred },
-          "*",
-        );
-      });
-    };
-
-    const onBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      deferred = e;
-      broadcast();
-    };
-
-    const onInstalled = () => {
-      deferred = null;
-      broadcast();
-    };
-
-    const onMessage = async (e: MessageEvent) => {
-      const data = e.data as { type?: string } | null;
-      if (!data || typeof data !== "object") return;
-      if (data.type === "ra-install-query") {
-        broadcast();
-        return;
-      }
-      if (data.type === "ra-install-request") {
-        if (!deferred) {
-          broadcast();
-          return;
-        }
-        try {
-          await deferred.prompt();
-          await deferred.userChoice;
-        } catch {
-          /* user dismissed */
-        }
-        deferred = null;
-        broadcast();
-      }
-    };
-
-    window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    window.addEventListener("appinstalled", onInstalled);
-    window.addEventListener("message", onMessage);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-      window.removeEventListener("appinstalled", onInstalled);
-      window.removeEventListener("message", onMessage);
-    };
-  }, []);
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  useInstallPromptBridge();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -206,4 +124,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

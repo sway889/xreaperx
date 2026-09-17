@@ -433,22 +433,7 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
 .scan-hero p{font-size:12px;color:var(--text-dim);line-height:1.65;margin-top:7px;}
 .scan-hero .mini-pill{margin-top:12px;}
 
-.getapp-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;max-width:900px;margin:0 auto;}
-.getapp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;text-align:left;}
-.getapp-card h3{font-family:var(--font-head);font-size:18px;margin:10px 0 8px;}
-.getapp-card p{color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:16px;}
-.getapp-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.12em;padding:5px 10px;border-radius:999px;background:var(--violet-glow);color:#cbb6ff;}
-.getapp-badge.gold-tag{background:var(--gold-glow);color:#f0d894;}
-.getapp-plat{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
-.getapp-chip{font-size:11px;color:var(--text-faint);border:1px solid var(--border);border-radius:999px;padding:5px 10px;}
-@media(max-width:768px){
-  .getapp-card{padding:18px;}
-  .hero-btns{flex-direction:column;}
-  .hero-btns .btn{width:100%;}
-  .nav-links{display:none;}
-}
 </style>
-
 </head>
 <body>
 
@@ -463,8 +448,6 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
       <a href="javascript:void(0)" onclick="qs('#features').scrollIntoView({behavior:'smooth'})">Features</a>
       <a href="javascript:void(0)" onclick="qs('#how').scrollIntoView({behavior:'smooth'})">How it works</a>
       <a href="javascript:void(0)" onclick="qs('#pricing').scrollIntoView({behavior:'smooth'})">Pricing</a>
-      <a href="javascript:void(0)" onclick="qs('#getapp').scrollIntoView({behavior:'smooth'})">Get the app</a>
-
     </div>
     <div class="nav-btns">
       <button type="button" id="btnNavLogin" class="btn btn-outline btn-md" onclick="showAuth('login','client')">Log in</button>
@@ -483,33 +466,6 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
       </div>
     </div>
   </section>
-
-  <section class="section" id="getapp">
-    <h2>Get the mobile app</h2>
-    <p class="section-lead">Install Reaper AI on your Android phone or iPhone and open your scanner straight from your home screen — no browser login needed. Just your license key.</p>
-    <div class="getapp-wrap">
-      <div class="getapp-card">
-        <div class="getapp-badge">STEP 1</div>
-        <h3>Install the app</h3>
-        <p id="installHint">Tap install below. On Android it installs in a few seconds. On iPhone, open this page in Safari, tap Share, then <strong>Add to Home Screen</strong>.</p>
-        <button type="button" class="btn btn-primary btn-block btn-md" id="btnInstallApp" onclick="requestInstall()">Install Reaper AI app</button>
-        <div class="getapp-plat">
-          <span class="getapp-chip">Android</span>
-          <span class="getapp-chip">iPhone &amp; iPad</span>
-          <span class="getapp-chip">Works offline-ready home screen icon</span>
-        </div>
-      </div>
-      <div class="getapp-card">
-        <div class="getapp-badge gold-tag">STEP 2</div>
-        <h3>Activate with your key</h3>
-        <p>Open the installed app and enter the license key your mentor gave you. The app remembers it on that device, so you go straight to the scanner next time. Key activation only appears inside the installed app.</p>
-        <button type="button" class="btn btn-gold btn-block btn-md" onclick="requestInstall()">Install first, then activate</button>
-        <div class="getapp-plat"><span class="getapp-chip">No password needed</span><span class="getapp-chip">One key, one device</span></div>
-      </div>
-    </div>
-  </section>
-
-
 
   <section class="section" id="features">
     <h2>Built for three roles, one platform</h2>
@@ -597,29 +553,14 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
     <div class="role-tabs" id="loginRoleTabs">
       <button type="button" class="role-tab active" onclick="setRole('client',this)">Client</button>
       <button type="button" class="role-tab" onclick="setRole('mentor',this)">Mentor</button>
-      <button type="button" class="role-tab" data-role="owner" onclick="setRole('owner',this)">Owner</button>
-      <button type="button" class="role-tab hidden" id="roleTabKey" data-role="key" onclick="setRole('key',this)">License key</button>
-
+      <button type="button" class="role-tab" onclick="setRole('owner',this)">Owner</button>
     </div>
     <div class="role-tabs hidden" id="regRoleTabs">
       <button type="button" class="role-tab active" onclick="setRole('client',this)">Client</button>
       <button type="button" class="role-tab" onclick="setRole('mentor',this)">Mentor</button>
     </div>
 
-    <div id="loginKey" class="hidden">
-      <div class="auth-title">Activate with license key</div>
-      <div class="auth-sub">Enter the key your mentor gave you — no password needed on this device.</div>
-      <div id="loginKeyErr" class="err hidden"></div>
-      <div class="field"><label>LICENSE KEY</label><input class="inp license-key-inp" type="text" id="lkKey" placeholder="XXX-000-000-000" onkeypress="if(event.key==='Enter')doKeyLogin()"></div>
-      <div id="lkFirstRun" class="hidden">
-        <div class="field"><label>YOUR NAME</label><input class="inp" type="text" id="lkName" placeholder="Full name"></div>
-        <div class="field"><label>EMAIL</label><input class="inp" type="email" id="lkEmail" placeholder="you@example.com"></div>
-      </div>
-      <button type="button" class="btn btn-primary btn-block btn-md" onclick="doKeyLogin()">Unlock scanner</button>
-    </div>
-
     <div id="loginClient">
-
       <div class="auth-title">Client login</div>
       <div class="auth-sub">Sign in with your email and mentor ID</div>
       <div id="loginClientErr" class="err hidden"></div>
@@ -1337,31 +1278,25 @@ window.switchTab = function switchTab(t){
 function setRole(role,btn){ authRole=role; syncRoleTabs(); renderAuthView(); }
 function syncRoleTabs(){
   qsa((authMode==='login'?'#loginRoleTabs':'#regRoleTabs')+' .role-tab').forEach(b=>{
-    const r=(b.dataset&&b.dataset.role)?b.dataset.role:b.textContent.trim().toLowerCase();
-    b.classList.toggle('active', r===authRole);
+    b.classList.toggle('active', b.textContent.trim().toLowerCase()===authRole);
   });
 }
 function renderAuthView(){
-  ['loginClient','loginMentor','loginOwner','loginKey','regClient','regMentor','pendingBox'].forEach(id=>{ const el=qs('#'+id); if(el) el.classList.add('hidden'); });
+  ['loginClient','loginMentor','loginOwner','regClient','regMentor','pendingBox'].forEach(id=>qs('#'+id).classList.add('hidden'));
   clearAuthErrs();
-  const keyTab=qs('#roleTabKey'); if(keyTab) keyTab.classList.toggle('hidden', !isAppMode());
-  if(authRole==='key' && !isAppMode()){ authRole='client'; syncRoleTabs(); }
   if(authMode==='login'){
     if(authRole==='client') qs('#loginClient').classList.remove('hidden');
     if(authRole==='mentor') qs('#loginMentor').classList.remove('hidden');
     if(authRole==='owner') qs('#loginOwner').classList.remove('hidden');
-    if(authRole==='key') qs('#loginKey').classList.remove('hidden');
     qs('#authSwitchLine').innerHTML="No account? <a href=\"javascript:void(0)\" onclick=\"switchTab('register')\">Sign up</a>";
     qs('#authSwitchLine').classList.remove('hidden');
   } else {
-    if(authRole==='key') authRole='client';
     if(authRole==='client') qs('#regClient').classList.remove('hidden');
     if(authRole==='mentor') qs('#regMentor').classList.remove('hidden');
     qs('#authSwitchLine').innerHTML="Have an account? <a href=\"javascript:void(0)\" onclick=\"switchTab('login')\">Log in</a>";
     qs('#authSwitchLine').classList.remove('hidden');
   }
 }
-
 function clearAuthErrs(){ qsa('.err').forEach(e=>e.classList.add('hidden')); }
 function showErr(el,msg){ el.textContent=msg; el.classList.remove('hidden'); }
 
@@ -1443,7 +1378,7 @@ async function doOwnerLogin(){
   session={role:'owner',email:res.account.email};
   showPage('pgAdmin'); initAdmin();
 }
-function doLogout(){ session=null; cloudClearSession(); try{ localStorage.removeItem('raDeviceKey'); }catch(e){} showPage(isStandaloneApp()?'pgAuth':'pgLanding'); if(isStandaloneApp()) showAuth('login','key'); }
+function doLogout(){ session=null; cloudClearSession(); showPage('pgLanding'); }
 
 function doActivateLicense(){
   const raw=qs('#licenseInput').value.trim().toUpperCase();
@@ -2374,115 +2309,16 @@ loadAppearance();
 loadVisionSettings();
 
 const urlParams = new URLSearchParams(window.location.search);
-/* ════ INSTALLED-APP / LICENSE-KEY ACCESS ════ */
-function isStandaloneApp(){
-  try{
-    return window.matchMedia('(display-mode: standalone)').matches ||
-           window.navigator.standalone===true ||
-           (window.parent!==window && window.parent.matchMedia &&
-            window.parent.matchMedia('(display-mode: standalone)').matches);
-  }catch(e){ return false; }
-}
-function isAppMode(){
-  try{ return urlParams.get('mode')==='app' || isStandaloneApp(); }catch(e){ return false; }
-}
-let __installReady=false;
-window.requestInstall = function requestInstall(){
-  const hint=qs('#installHint');
-  if(isStandaloneApp()){
-    if(hint) hint.textContent='The app is already installed on this device. Enter your license key below to unlock the scanner.';
-    showAuth('login','key');
-    return;
-  }
-  try{ window.parent.postMessage({type:'ra-install-request'},'*'); }catch(e){}
-  setTimeout(function(){
-    if(!__installReady && hint){
-      const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-      hint.innerHTML = ios
-        ? 'On iPhone/iPad: tap the <strong>Share</strong> button in Safari, then <strong>Add to Home Screen</strong>. Reaper AI appears as an app icon.'
-        : 'Open your browser menu and tap <strong>Install app</strong> or <strong>Add to Home screen</strong> to install Reaper AI.';
-    }
-  }, 700);
-}
-window.addEventListener('message', function(e){
-  const d=e.data;
-  if(d && d.type==='ra-install-available'){
-    __installReady=!!d.available;
-    const btn=qs('#btnInstallApp');
-    if(btn) btn.textContent = __installReady ? 'Install Reaper AI app' : 'How to install on this device';
-  }
-});
-try{ window.parent.postMessage({type:'ra-install-query'},'*'); }catch(e){}
-
-window.doKeyLogin = function doKeyLogin(){
-  const raw=(qs('#lkKey').value||'').trim().toUpperCase();
-  const err=qs('#loginKeyErr'); err.classList.add('hidden');
-  if(!raw){ showErr(err,'Enter your license key.'); return; }
-  const keys=getKeys();
-  const kIdx=keys.findIndex(k=>k.key===raw);
-  if(kIdx<0){ showErr(err,'That license key does not exist. Check it with your mentor.'); return; }
-  const key=keys[kIdx];
-  if(key.status==='revoked'){ showErr(err,'This license key has been revoked. Contact your mentor.'); return; }
-  const clients=getClients();
-  let idx = key.clientEmail ? clients.findIndex(c=>String(c.email||'').toLowerCase()===String(key.clientEmail).toLowerCase()) : -1;
-  if(idx<0){
-    const email=((qs('#lkEmail')||{}).value||'').trim().toLowerCase();
-    const name=((qs('#lkName')||{}).value||'').trim();
-    if(!email){
-      qs('#lkFirstRun').classList.remove('hidden');
-      showErr(err,'First activation on this device — add your name and email so your mentor can see you.');
-      return;
-    }
-    if(key.clientEmail && email!==String(key.clientEmail).toLowerCase()){
-      showErr(err,'This key is assigned to '+key.clientEmail+'. Use that email.'); return;
-    }
-    idx = clients.findIndex(c=>String(c.email||'').toLowerCase()===email);
-    if(idx<0){
-      clients.push({id:uid(),name:name||email.split('@')[0],email:email,pass:'',mentorId:key.mentorId,
-        status:'active',joined:new Date().toISOString(),licenseKey:null,eaId:null,activated:false,symbolPrefs:{}});
-      idx=clients.length-1;
-    }
-  }
-  const client=clients[idx];
-  if(client.status==='suspended'){ showErr(err,'This account is suspended. Contact your mentor.'); return; }
-  key.status='used'; key.clientEmail=client.email; key.clientName=client.name;
-  if(!key.usedAt) key.usedAt=new Date().toISOString();
-  keys[kIdx]=key; saveKeys(keys);
-  client.licenseKey=raw; client.eaId=key.eaId; client.activated=true;
-  if(client.status==='pending') client.status='active';
-  clients[idx]=client; saveClients(clients);
-  try{ localStorage.setItem('raDeviceKey',raw); }catch(e){}
-  session={role:'client',email:client.email};
-  qs('#lkKey').value='';
-  enterClientApp(client);
-}
-function tryDeviceResume(){
-  let raw=''; try{ raw=localStorage.getItem('raDeviceKey')||''; }catch(e){}
-  if(!raw) return false;
-  const key=getKeys().find(k=>k.key===raw);
-  if(!key || key.status==='revoked' || !key.clientEmail) return false;
-  const client=getClients().find(c=>String(c.email||'').toLowerCase()===String(key.clientEmail).toLowerCase());
-  if(!client || client.status==='suspended' || !client.activated) return false;
-  session={role:'client',email:client.email};
-  enterClientApp(client);
-  return true;
-}
-
-if(urlParams.get('mode')==='app' || isStandaloneApp()){
+if(urlParams.get('mode')==='app'){
   document.title='Reaper AI Scanner — App';
-  showPage('pgAuth'); showAuth('login','key');
+  showPage('pgAuth'); showAuth('login','client');
 } else {
   showPage('pgLanding');
 }
 
 // Pull every saved account, EA, license key and history entry from the cloud
 // before anything is rendered, then seed demo data only on a truly empty platform.
-cloudHydrate().then(afterBoot).catch(afterBoot);
-function afterBoot(){
-  seedDemoDataIfEmpty();
-  if(!session) tryDeviceResume();
-}
-
+cloudHydrate().then(function(){ seedDemoDataIfEmpty(); }).catch(function(){ seedDemoDataIfEmpty(); });
 
 // Visual confirmation that JS is alive (tiny indicator, removed after 3s)
 (function(){
