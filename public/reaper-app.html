@@ -1344,6 +1344,8 @@ function syncRoleTabs(){
 function renderAuthView(){
   ['loginClient','loginMentor','loginOwner','loginKey','regClient','regMentor','pendingBox'].forEach(id=>{ const el=qs('#'+id); if(el) el.classList.add('hidden'); });
   clearAuthErrs();
+  const keyTab=qs('#roleTabKey'); if(keyTab) keyTab.classList.toggle('hidden', !isAppMode());
+  if(authRole==='key' && !isAppMode()){ authRole='client'; syncRoleTabs(); }
   if(authMode==='login'){
     if(authRole==='client') qs('#loginClient').classList.remove('hidden');
     if(authRole==='mentor') qs('#loginMentor').classList.remove('hidden');
