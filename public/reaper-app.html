@@ -2383,6 +2383,9 @@ function isStandaloneApp(){
             window.parent.matchMedia('(display-mode: standalone)').matches);
   }catch(e){ return false; }
 }
+function isAppMode(){
+  try{ return urlParams.get('mode')==='app' || isStandaloneApp(); }catch(e){ return false; }
+}
 let __installReady=false;
 window.requestInstall = function requestInstall(){
   const hint=qs('#installHint');
