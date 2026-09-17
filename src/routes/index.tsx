@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <iframe
-      src="/reaper-app.html"
+      src="/reaper-app.html?v=3"
       title="Reaper AI Scanner"
       className="h-screen w-screen border-0"
     />
