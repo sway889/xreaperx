@@ -3,7 +3,7 @@
   "name": "Reaper AI Scanner",
   "short_name": "Reaper AI",
   "description": "AI Forex chart scanning and license-protected EA control for Reaper AI clients.",
-  "start_url": "/",
+  "start_url": "/?mode=app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
