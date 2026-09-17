@@ -1443,7 +1443,7 @@ async function doOwnerLogin(){
   session={role:'owner',email:res.account.email};
   showPage('pgAdmin'); initAdmin();
 }
-function doLogout(){ session=null; cloudClearSession(); try{ localStorage.removeItem('raDeviceKey'); }catch(e){} showPage(isStandaloneApp()?'pgAuth':'pgLanding'); if(isStandaloneApp()) showAuth('login','key'); }
+function doLogout(){ session=null; cloudClearSession(); try{ localStorage.removeItem('raDeviceKey'); }catch(e){} showPage(isAppMode()?'pgAuth':'pgLanding'); if(isAppMode()) showAuth('login','key'); }
 
 function doActivateLicense(){
   const raw=qs('#licenseInput').value.trim().toUpperCase();
@@ -2384,7 +2384,12 @@ function isStandaloneApp(){
   }catch(e){ return false; }
 }
 function isAppMode(){
-  try{ return urlParams.get('mode')==='app' || isStandaloneApp(); }catch(e){ return false; }
+  try{
+    if(urlParams.get('mode')==='app') return true;
+    if(window.parent!==window && window.parent.location &&
+       new URLSearchParams(window.parent.location.search).get('mode')==='app') return true;
+  }catch(e){}
+  return isStandaloneApp();
 }
 let __installReady=false;
 window.requestInstall = function requestInstall(){
@@ -2468,7 +2473,7 @@ function tryDeviceResume(){
   return true;
 }
 
-if(urlParams.get('mode')==='app' || isStandaloneApp()){
+if(isAppMode()){
   document.title='Reaper AI Scanner — App';
   showPage('pgAuth'); showAuth('login','key');
 } else {
