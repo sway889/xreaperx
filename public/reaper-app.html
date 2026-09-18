@@ -1240,7 +1240,36 @@ function getMentors(){
   m = m.map(x => ({keyQuota:100, keysGenerated:0, ...x}));
   return m;
 }
-function saveMentors(v){ localStorage.setItem('raMentors',JSON.stringify(v)); }
+// Storage can be full (EA images/videos are stored inline). Never let a write
+// fail silently — free room by dropping the heaviest cached data first.
+function freeUpStorage(){
+  let freed=false;
+  try{
+    for(const k of Object.keys(localStorage)){
+      if(/^(raScanHistory_|raHistory_|raEcoCal)/.test(k)){ localStorage.removeItem(k); freed=true; }
+    }
+  }catch(_){}
+  return freed;
+}
+function stripEaMedia(){
+  try{
+    const eas=JSON.parse(localStorage.getItem('raEAs')||'[]');
+    let changed=false;
+    eas.forEach(e=>{ if(e.video){ e.video=''; changed=true; } });
+    if(changed){ localStorage.setItem('raEAs',JSON.stringify(eas)); return true; }
+  }catch(_){}
+  return false;
+}
+function safeSet(key,value){
+  const str=typeof value==='string'?value:JSON.stringify(value);
+  try{ localStorage.setItem(key,str); return true; }catch(err){
+    if(freeUpStorage()){ try{ localStorage.setItem(key,str); return true; }catch(_){} }
+    if(stripEaMedia()){ try{ localStorage.setItem(key,str); return true; }catch(_){} }
+    alert('Storage is full on this device, so that change could not be saved.\n\nRemove an EA video or a large EA image and try again.');
+    return false;
+  }
+}
+function saveMentors(v){ return safeSet('raMentors',v); }
 function getMentorQuota(mentorId){
   const m = getMentors().find(x=>x.mentorId===mentorId);
   return m ? (m.keyQuota||100) : 100;
@@ -1248,12 +1277,12 @@ function getMentorQuota(mentorId){
 function getKeysGenerated(mentorId){
   return getKeys().filter(k=>k.mentorId===mentorId).length;
 }
-function getClients(){ return JSON.parse(localStorage.getItem('raClients')||'[]'); }
-function saveClients(v){ localStorage.setItem('raClients',JSON.stringify(v)); }
-function getEAs(){ return JSON.parse(localStorage.getItem('raEAs')||'[]'); }
-function saveEAs(v){ localStorage.setItem('raEAs',JSON.stringify(v)); }
-function getKeys(){ return JSON.parse(localStorage.getItem('raKeys')||'[]'); }
-function saveKeys(v){ localStorage.setItem('raKeys',JSON.stringify(v)); }
+function getClients(){ try{ return JSON.parse(localStorage.getItem('raClients')||'[]')||[]; }catch(_){ return []; } }
+function saveClients(v){ return safeSet('raClients',v); }
+function getEAs(){ try{ return JSON.parse(localStorage.getItem('raEAs')||'[]')||[]; }catch(_){ return []; } }
+function saveEAs(v){ return safeSet('raEAs',v); }
+function getKeys(){ try{ return JSON.parse(localStorage.getItem('raKeys')||'[]')||[]; }catch(_){ return []; } }
+function saveKeys(v){ return safeSet('raKeys',v); }
 function getMt(email){ const all=JSON.parse(localStorage.getItem('raMt')||'{}'); return all[email]||null; }
 function storeMt(email,data){ const all=JSON.parse(localStorage.getItem('raMt')||'{}'); all[email]=data; localStorage.setItem('raMt',JSON.stringify(all)); }
 function getHistory(email){ return JSON.parse(localStorage.getItem('raHistory_'+email)||'[]'); }
