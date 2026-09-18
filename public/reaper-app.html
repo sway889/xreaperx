@@ -937,7 +937,7 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
       <div class="dash-header"><h1>License keys</h1></div>
       <div class="card" style="margin-bottom:20px;">
         <div class="card-head">Generate a new key</div>
-        <div class="field"><label>SELECT CLIENT</label><select class="inp" id="keyClientSelect"></select></div>
+        <div class="field"><label>CLIENT NAME (optional — any of your clients can activate it)</label><input class="inp" type="text" id="keyClientName" placeholder="e.g. John Dube"></div>
         <div class="field"><label>SELECT EA</label><select class="inp" id="keyEaSelect"></select></div>
         <button type="button" class="btn btn-primary btn-block btn-md" onclick="generateKey()">Generate license key</button><div id="keyQuotaInfo" style="margin-top:12px;font-size:12.5px;"></div>
       </div>
@@ -1240,7 +1240,36 @@ function getMentors(){
   m = m.map(x => ({keyQuota:100, keysGenerated:0, ...x}));
   return m;
 }
-function saveMentors(v){ localStorage.setItem('raMentors',JSON.stringify(v)); }
+// Storage can be full (EA images/videos are stored inline). Never let a write
+// fail silently — free room by dropping the heaviest cached data first.
+function freeUpStorage(){
+  let freed=false;
+  try{
+    for(const k of Object.keys(localStorage)){
+      if(/^(raScanHistory_|raHistory_|raEcoCal)/.test(k)){ localStorage.removeItem(k); freed=true; }
+    }
+  }catch(_){}
+  return freed;
+}
+function stripEaMedia(){
+  try{
+    const eas=JSON.parse(localStorage.getItem('raEAs')||'[]');
+    let changed=false;
+    eas.forEach(e=>{ if(e.video){ e.video=''; changed=true; } });
+    if(changed){ localStorage.setItem('raEAs',JSON.stringify(eas)); return true; }
+  }catch(_){}
+  return false;
+}
+function safeSet(key,value){
+  const str=typeof value==='string'?value:JSON.stringify(value);
+  try{ localStorage.setItem(key,str); return true; }catch(err){
+    if(freeUpStorage()){ try{ localStorage.setItem(key,str); return true; }catch(_){} }
+    if(stripEaMedia()){ try{ localStorage.setItem(key,str); return true; }catch(_){} }
+    alert('Storage is full on this device, so that change could not be saved.\n\nRemove an EA video or a large EA image and try again.');
+    return false;
+  }
+}
+function saveMentors(v){ return safeSet('raMentors',v); }
 function getMentorQuota(mentorId){
   const m = getMentors().find(x=>x.mentorId===mentorId);
   return m ? (m.keyQuota||100) : 100;
@@ -1248,12 +1277,12 @@ function getMentorQuota(mentorId){
 function getKeysGenerated(mentorId){
   return getKeys().filter(k=>k.mentorId===mentorId).length;
 }
-function getClients(){ return JSON.parse(localStorage.getItem('raClients')||'[]'); }
-function saveClients(v){ localStorage.setItem('raClients',JSON.stringify(v)); }
-function getEAs(){ return JSON.parse(localStorage.getItem('raEAs')||'[]'); }
-function saveEAs(v){ localStorage.setItem('raEAs',JSON.stringify(v)); }
-function getKeys(){ return JSON.parse(localStorage.getItem('raKeys')||'[]'); }
-function saveKeys(v){ localStorage.setItem('raKeys',JSON.stringify(v)); }
+function getClients(){ try{ return JSON.parse(localStorage.getItem('raClients')||'[]')||[]; }catch(_){ return []; } }
+function saveClients(v){ return safeSet('raClients',v); }
+function getEAs(){ try{ return JSON.parse(localStorage.getItem('raEAs')||'[]')||[]; }catch(_){ return []; } }
+function saveEAs(v){ return safeSet('raEAs',v); }
+function getKeys(){ try{ return JSON.parse(localStorage.getItem('raKeys')||'[]')||[]; }catch(_){ return []; } }
+function saveKeys(v){ return safeSet('raKeys',v); }
 function getMt(email){ const all=JSON.parse(localStorage.getItem('raMt')||'{}'); return all[email]||null; }
 function storeMt(email,data){ const all=JSON.parse(localStorage.getItem('raMt')||'{}'); all[email]=data; localStorage.setItem('raMt',JSON.stringify(all)); }
 function getHistory(email){ return JSON.parse(localStorage.getItem('raHistory_'+email)||'[]'); }
@@ -1976,25 +2005,65 @@ function renderEaSymbolTags(){
   qs('#eaSymbolTags').innerHTML = eaSymbolsDraft.map(s=>`<span class="tag">${s}<button type="button" onclick="removeEaSymbolDraft('${s.replace(/'/g,"\\'")}')">&times;</button></span>`).join('');
 }
 function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+// Shrink uploaded EA images before storing them — full-size photos as data URLs
+// are what used to silently blow the browser storage limit and abort EA creation.
+function compressImageFile(file, maxSide=720, quality=0.72){
+  return new Promise(async (resolve)=>{
+    try{
+      const dataUrl=await fileToDataURL(file);
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const scale=Math.min(1, maxSide/Math.max(img.width,img.height));
+          const w=Math.max(1,Math.round(img.width*scale)), h=Math.max(1,Math.round(img.height*scale));
+          const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+          cv.getContext('2d').drawImage(img,0,0,w,h);
+          const out=cv.toDataURL('image/jpeg',quality);
+          resolve(out && out.length < dataUrl.length ? out : dataUrl);
+        }catch(_){ resolve(dataUrl); }
+      };
+      img.onerror=()=>resolve(dataUrl);
+      img.src=dataUrl;
+    }catch(_){ resolve(''); }
+  });
+}
 async function createEA(){
-  const name=qs('#eaName').value.trim(), desc=qs('#eaDesc').value.trim();
-  const mentorName=qs('#eaMentorName').value.trim();
+  const nameEl=qs('#eaName'), descEl=qs('#eaDesc');
+  const name=(nameEl?.value||'').trim(), desc=(descEl?.value||'').trim();
+  const mentorName=(qs('#eaMentorName')?.value||session.name||'').trim();
   const fileInput=qs('#eaImageInput');
   const videoInput=qs('#eaVideoInput');
+  if(!session||!session.mentorId){ alert('Your session expired. Please log in again.'); return; }
   if(!name){ alert('Enter an EA name.'); return; }
   const myEAs = getEAs().filter(e=>e.mentorId===session.mentorId);
   if(myEAs.length >= 3){ alert('You can create a maximum of 3 EAs. Delete one to create another.'); return; }
+  if(myEAs.some(e=>(e.name||'').toLowerCase()===name.toLowerCase())){ alert('You already have an EA with that name.'); return; }
   let image='', video='';
-  if(fileInput.files[0]) image=await fileToDataURL(fileInput.files[0]);
-  if(videoInput && videoInput.files[0]){
-    if(videoInput.files[0].size > 8*1024*1024){ alert('Video must be under 8MB for local storage.'); return; }
-    video=await fileToDataURL(videoInput.files[0]);
+  try{
+    if(fileInput && fileInput.files[0]) image=await compressImageFile(fileInput.files[0]);
+    if(videoInput && videoInput.files[0]){
+      if(videoInput.files[0].size > 2*1024*1024){
+        alert('That video is too large to store in the browser (max 2MB). The EA will be created with the image only.');
+      } else {
+        video=await fileToDataURL(videoInput.files[0]);
+      }
+    }
+  }catch(err){
+    alert('That image or video could not be read. The EA will be created without it.');
   }
   const eas=getEAs();
-  eas.push({id:uid(),mentorId:session.mentorId,mentorName,name,description:desc,image,video,symbols:[...eaSymbolsDraft]});
-  saveEAs(eas);
-  qs('#eaName').value=''; qs('#eaDesc').value=''; if(fileInput) fileInput.value=''; if(videoInput) videoInput.value=''; eaSymbolsDraft=[]; renderEaSymbolTags();
+  const ea={id:uid(),mentorId:session.mentorId,mentorName,name,description:desc,image,video,symbols:[...eaSymbolsDraft]};
+  eas.push(ea);
+  if(!saveEAs(eas)){
+    // Retry without the heavy media rather than losing the EA entirely.
+    ea.video=''; ea.image='';
+    if(!saveEAs(eas)){ return; }
+    alert('EA created, but the image could not be stored because the browser storage is full.');
+  }
+  if(nameEl) nameEl.value=''; if(descEl) descEl.value='';
+  if(fileInput) fileInput.value=''; if(videoInput) videoInput.value=''; eaSymbolsDraft=[]; renderEaSymbolTags();
   renderMentorEAs(); renderKeyEaSelect(); renderMentorOverview();
+  alert('EA "'+name+'" created. You can now generate license keys for it.');
 }
 function deleteEA(id){
   if(!confirm('Delete this EA? Existing license keys for it will stop working.')) return;
@@ -2029,24 +2098,28 @@ function renderMentorOverview(){
 function renderKeyEaSelect(){
   const eas=getEAs().filter(e=>e.mentorId===session.mentorId);
   const sel=qs('#keyEaSelect');
+  if(!sel) return;
+  const prev=sel.value;
   sel.innerHTML = eas.length ? eas.map(e=>`<option value="${e.id}">${e.name}</option>`).join('') : '<option value="">Create an EA first</option>';
+  if(prev && eas.some(e=>String(e.id)===String(prev))) sel.value=prev;
 }
 function renderKeyClientSelect(){
-  const clients=getClients().filter(c=>c.mentorId===session.mentorId);
-  const sel=qs('#keyClientSelect');
-  if(!sel) return;
-  sel.innerHTML='<option value="">Unassigned — any of my clients can activate it</option>'+clients.map(c=>`<option value="${c.email}">${c.name} · ${c.email}</option>`).join('');
+  // Keys are no longer tied to a picked client — the mentor just types a name.
+  const inp=qs('#keyClientName');
+  if(inp) inp.value='';
 }
 function keyPrefixFromName(name){
   const letters=(name||'').toUpperCase().replace(/[^A-Z]/g,'');
   return (letters+'XXX').slice(0,3);
 }
 function generateKey(){
-  const eaId=+qs('#keyEaSelect').value;
-  const ea=getEAs().find(e=>e.id===eaId);
-  const clientEmail=qs('#keyClientSelect')?.value||'';
-  const client=getClients().find(c=>c.email===clientEmail && c.mentorId===session.mentorId);
-  if(!ea){ alert('Create an EA first (Robots tab), then generate a key.'); return; }
+  if(!session||!session.mentorId){ alert('Your session expired. Please log in again.'); return; }
+  const sel=qs('#keyEaSelect');
+  const eas=getEAs().filter(e=>e.mentorId===session.mentorId);
+  if(!eas.length){ alert('Create an EA first (My EAs tab), then generate a key.'); return; }
+  // Fall back to the mentor's first EA if the dropdown is empty or stale.
+  let ea=eas.find(e=>String(e.id)===String(sel&&sel.value)) || eas[0];
+  const clientName=(qs('#keyClientName')?.value||'').trim();
   const generated = getKeysGenerated(session.mentorId);
   const quota = getMentorQuota(session.mentorId);
   if(generated >= quota){
@@ -2056,15 +2129,17 @@ function generateKey(){
   const prefix=keyPrefixFromName(ea.name);
   const keys=getKeys();
   let key;
+  let guard=0;
   do{
     const g=()=>String(Math.floor(Math.random()*1000)).padStart(3,'0');
     key=`${prefix}-${g()}-${g()}-${g()}`;
-  }while(keys.find(k=>k.key===key));
-  keys.push({key,eaId:ea.id,eaName:ea.name,eaImage:ea.image||'',eaSymbols:[...(ea.symbols||[])],mentorId:session.mentorId,status:client?'assigned':'unassigned',clientEmail:client?client.email:'',clientName:client?client.name:'',createdAt:new Date().toISOString(),renewedAt:null});
-  saveKeys(keys);
+  }while(keys.some(k=>k.key===key) && ++guard<5000);
+  keys.push({key,eaId:ea.id,eaName:ea.name,eaSymbols:[...(ea.symbols||[])],mentorId:session.mentorId,status:'unassigned',clientEmail:'',clientName,createdAt:new Date().toISOString(),renewedAt:null});
+  if(!saveKeys(keys)) return;
   renderKeyList(); renderMentorOverview();
   updateKeyQuotaUI();
-  alert('License key generated:\n\n'+key+(client?('\n\nAssigned to '+client.name):'\n\nUnassigned — any of your clients can activate it.'));
+  const inp=qs('#keyClientName'); if(inp) inp.value='';
+  alert('License key generated:\n\n'+key+'\n\nFor: '+(clientName||'any of your clients')+'\nEA: '+ea.name);
 }
 function updateKeyQuotaUI(){
   const el = qs('#keyQuotaInfo');
