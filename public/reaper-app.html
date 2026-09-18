@@ -2098,24 +2098,28 @@ function renderMentorOverview(){
 function renderKeyEaSelect(){
   const eas=getEAs().filter(e=>e.mentorId===session.mentorId);
   const sel=qs('#keyEaSelect');
+  if(!sel) return;
+  const prev=sel.value;
   sel.innerHTML = eas.length ? eas.map(e=>`<option value="${e.id}">${e.name}</option>`).join('') : '<option value="">Create an EA first</option>';
+  if(prev && eas.some(e=>String(e.id)===String(prev))) sel.value=prev;
 }
 function renderKeyClientSelect(){
-  const clients=getClients().filter(c=>c.mentorId===session.mentorId);
-  const sel=qs('#keyClientSelect');
-  if(!sel) return;
-  sel.innerHTML='<option value="">Unassigned — any of my clients can activate it</option>'+clients.map(c=>`<option value="${c.email}">${c.name} · ${c.email}</option>`).join('');
+  // Keys are no longer tied to a picked client — the mentor just types a name.
+  const inp=qs('#keyClientName');
+  if(inp) inp.value='';
 }
 function keyPrefixFromName(name){
   const letters=(name||'').toUpperCase().replace(/[^A-Z]/g,'');
   return (letters+'XXX').slice(0,3);
 }
 function generateKey(){
-  const eaId=+qs('#keyEaSelect').value;
-  const ea=getEAs().find(e=>e.id===eaId);
-  const clientEmail=qs('#keyClientSelect')?.value||'';
-  const client=getClients().find(c=>c.email===clientEmail && c.mentorId===session.mentorId);
-  if(!ea){ alert('Create an EA first (Robots tab), then generate a key.'); return; }
+  if(!session||!session.mentorId){ alert('Your session expired. Please log in again.'); return; }
+  const sel=qs('#keyEaSelect');
+  const eas=getEAs().filter(e=>e.mentorId===session.mentorId);
+  if(!eas.length){ alert('Create an EA first (My EAs tab), then generate a key.'); return; }
+  // Fall back to the mentor's first EA if the dropdown is empty or stale.
+  let ea=eas.find(e=>String(e.id)===String(sel&&sel.value)) || eas[0];
+  const clientName=(qs('#keyClientName')?.value||'').trim();
   const generated = getKeysGenerated(session.mentorId);
   const quota = getMentorQuota(session.mentorId);
   if(generated >= quota){
@@ -2125,15 +2129,17 @@ function generateKey(){
   const prefix=keyPrefixFromName(ea.name);
   const keys=getKeys();
   let key;
+  let guard=0;
   do{
     const g=()=>String(Math.floor(Math.random()*1000)).padStart(3,'0');
     key=`${prefix}-${g()}-${g()}-${g()}`;
-  }while(keys.find(k=>k.key===key));
-  keys.push({key,eaId:ea.id,eaName:ea.name,eaImage:ea.image||'',eaSymbols:[...(ea.symbols||[])],mentorId:session.mentorId,status:client?'assigned':'unassigned',clientEmail:client?client.email:'',clientName:client?client.name:'',createdAt:new Date().toISOString(),renewedAt:null});
-  saveKeys(keys);
+  }while(keys.some(k=>k.key===key) && ++guard<5000);
+  keys.push({key,eaId:ea.id,eaName:ea.name,eaSymbols:[...(ea.symbols||[])],mentorId:session.mentorId,status:'unassigned',clientEmail:'',clientName,createdAt:new Date().toISOString(),renewedAt:null});
+  if(!saveKeys(keys)) return;
   renderKeyList(); renderMentorOverview();
   updateKeyQuotaUI();
-  alert('License key generated:\n\n'+key+(client?('\n\nAssigned to '+client.name):'\n\nUnassigned — any of your clients can activate it.'));
+  const inp=qs('#keyClientName'); if(inp) inp.value='';
+  alert('License key generated:\n\n'+key+'\n\nFor: '+(clientName||'any of your clients')+'\nEA: '+ea.name);
 }
 function updateKeyQuotaUI(){
   const el = qs('#keyQuotaInfo');
