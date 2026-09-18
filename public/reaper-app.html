@@ -937,7 +937,7 @@ body[data-nav="indicator"] .bn-item.active::after{content:'';position:absolute;t
       <div class="dash-header"><h1>License keys</h1></div>
       <div class="card" style="margin-bottom:20px;">
         <div class="card-head">Generate a new key</div>
-        <div class="field"><label>SELECT CLIENT</label><select class="inp" id="keyClientSelect"></select></div>
+        <div class="field"><label>CLIENT NAME (optional — any of your clients can activate it)</label><input class="inp" type="text" id="keyClientName" placeholder="e.g. John Dube"></div>
         <div class="field"><label>SELECT EA</label><select class="inp" id="keyEaSelect"></select></div>
         <button type="button" class="btn btn-primary btn-block btn-md" onclick="generateKey()">Generate license key</button><div id="keyQuotaInfo" style="margin-top:12px;font-size:12.5px;"></div>
       </div>
