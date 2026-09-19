@@ -2237,7 +2237,20 @@ function changeClientEA(email,eaIdStr){
 }
 
 /* ════ OWNER DASHBOARD ════ */
-function initAdmin(){ loadAppearance(); renderAdminStats();renderMentorsTable();renderClientsTable();renderPendingLists();adminClock();setInterval(adminClock,1000); }
+function renderAdminAll(){ renderAdminStats();renderMentorsTable();renderClientsTable();renderPendingLists(); }
+/* New sign-ups made on other devices land in the shared store, so keep pulling it. */
+let __adminSyncTimer=null;
+async function refreshAdminFromCloud(){
+  try{ await cloudHydrate(); }catch(e){}
+  try{ renderAdminAll(); }catch(e){}
+}
+function initAdmin(){
+  loadAppearance(); renderAdminAll(); adminClock(); setInterval(adminClock,1000);
+  refreshAdminFromCloud();
+  if(__adminSyncTimer) clearInterval(__adminSyncTimer);
+  __adminSyncTimer=setInterval(refreshAdminFromCloud,15000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) refreshAdminFromCloud(); });
+}
 function adminClock(){ const el=qs('#adminClock'); if(el)el.textContent=new Date().toLocaleString(); }
 function adminTab(el,name){
   qsa('#pgAdmin .dash-section').forEach(s=>s.classList.remove('active'));
