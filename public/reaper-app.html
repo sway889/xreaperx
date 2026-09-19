@@ -1234,18 +1234,11 @@ function localLogin(payload){
   if(c.status==='suspended') return {ok:false,error:'This account is suspended. Contact your mentor.'};
   return {ok:true,token:'local-client',account:c};
 }
-/* Login always resolves locally first so it works with or without a server.
-   When a server is present we still notify it, but never block the user on it. */
+/* Accounts live in the shared online store, which is pulled in before every
+   login attempt, so signing in works from any device. */
 async function cloudLogin(payload){
-  const local=localLogin(payload);
-  try{
-    if(!__cloudOff) fetch('/api/public/auth/login',{
-      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-    }).then(function(r){ return r.json(); }).then(function(res){
-      if(res&&res.ok) cloudStoreSession(res);
-    }).catch(function(){});
-  }catch(e){}
-  return local;
+  try{ await cloudHydrate(); }catch(e){}
+  return localLogin(payload);
 }
 function cloudStoreSession(res){
   if(res&&res.token) __rawSet('raToken', res.token);
