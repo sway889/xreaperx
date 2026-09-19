@@ -1350,36 +1350,41 @@ function genMentorId(){
   return id;
 }
 
-function doClientRegister(){
+async function doClientRegister(){
   const name=qs('#rcName').value.trim(), email=qs('#rcEmail').value.trim().toLowerCase();
   const mentorId=qs('#rcMentorId').value.trim().toUpperCase(), pass=qs('#rcPass').value;
   const err=qs('#regClientErr'); err.classList.add('hidden');
   if(!name||!email||!mentorId||!pass){ showErr(err,'Fill in all fields.'); return; }
   if(pass.length<8){ showErr(err,'Password must be 8+ characters.'); return; }
   if(!email.includes('@')){ showErr(err,'Enter a valid email.'); return; }
+  /* Pull the shared store first so we never overwrite other people's accounts. */
+  try{ await cloudHydrate(); }catch(e){}
   const mentor=getMentors().find(m=>m.mentorId===mentorId);
   if(!mentor){ showErr(err,'Mentor ID not found. Check with your mentor.'); return; }
   const clients=getClients();
-  if(clients.find(c=>c.email===email)){ showErr(err,'Email already registered. Log in instead.'); return; }
+  if(clients.find(c=>String(c.email||'').toLowerCase()===email)){ showErr(err,'Email already registered. Log in instead.'); return; }
   clients.push({id:uid(),name,email,pass,mentorId,status:'pending',joined:new Date().toISOString(),licenseKey:null,eaId:null,activated:false,symbolPrefs:{}});
   saveClients(clients);
+  try{ await cloudPush('raClients', JSON.stringify(getClients())); }catch(e){}
   qs('#regClient').classList.add('hidden');
   qs('#pendingMentorCodeBox').classList.add('hidden');
   qs('#pendingSub').textContent='Account created. Pay by bank transfer using the details below to activate:';
   qs('#pendingAmt').textContent='R450';
   qs('#pendingBox').classList.remove('hidden');
 }
-function doMentorRegister(){
+async function doMentorRegister(){
   const name=qs('#rmName').value.trim(), email=qs('#rmEmail').value.trim().toLowerCase(), pass=qs('#rmPass').value;
   const err=qs('#regMentorErr'); err.classList.add('hidden');
   if(!name||!email||!pass){ showErr(err,'Fill in all fields.'); return; }
   if(pass.length<8){ showErr(err,'Password must be 8+ characters.'); return; }
   if(!email.includes('@')){ showErr(err,'Enter a valid email.'); return; }
+  try{ await cloudHydrate(); }catch(e){}
   const mentors=getMentors();
-  if(mentors.find(m=>m.email===email)){ showErr(err,'Email already registered. Log in instead.'); return; }
+  if(mentors.find(m=>String(m.email||'').toLowerCase()===email)){ showErr(err,'Email already registered. Log in instead.'); return; }
   const mentorId=genMentorId();
   mentors.push({id:uid(),mentorId,name,email,pass,status:'pending',joined:new Date().toISOString()});
   saveMentors(mentors);
+  try{ await cloudPush('raMentors', JSON.stringify(getMentors())); }catch(e){}
   qs('#regMentor').classList.add('hidden');
   qs('#pendingSub').textContent='Mentor account created. Pay by bank transfer using the details below to activate:';
   qs('#pendingAmt').textContent='R650';
@@ -2232,7 +2237,20 @@ function changeClientEA(email,eaIdStr){
 }
 
 /* ════ OWNER DASHBOARD ════ */
-function initAdmin(){ loadAppearance(); renderAdminStats();renderMentorsTable();renderClientsTable();renderPendingLists();adminClock();setInterval(adminClock,1000); }
+function renderAdminAll(){ renderAdminStats();renderMentorsTable();renderClientsTable();renderPendingLists(); }
+/* New sign-ups made on other devices land in the shared store, so keep pulling it. */
+let __adminSyncTimer=null;
+async function refreshAdminFromCloud(){
+  try{ await cloudHydrate(); }catch(e){}
+  try{ renderAdminAll(); }catch(e){}
+}
+function initAdmin(){
+  loadAppearance(); renderAdminAll(); adminClock(); setInterval(adminClock,1000);
+  refreshAdminFromCloud();
+  if(__adminSyncTimer) clearInterval(__adminSyncTimer);
+  __adminSyncTimer=setInterval(refreshAdminFromCloud,15000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) refreshAdminFromCloud(); });
+}
 function adminClock(){ const el=qs('#adminClock'); if(el)el.textContent=new Date().toLocaleString(); }
 function adminTab(el,name){
   qsa('#pgAdmin .dash-section').forEach(s=>s.classList.remove('active'));
