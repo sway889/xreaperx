@@ -1171,6 +1171,27 @@ localStorage.setItem = function(k,v){
   __rawSet(k,v);
   if(CLOUD_KEY_RE.test(String(k))){ try{ cloudPush(String(k), String(v)); }catch(e){} }
 };
+/* Uploads anything stored only on this device so it becomes available everywhere. */
+function cloudUploadLocalOnly(serverState){
+  const entries=[];
+  try{
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k||!CLOUD_KEY_RE.test(k)) continue;
+      if(serverState && Object.prototype.hasOwnProperty.call(serverState,k)) continue;
+      const raw=localStorage.getItem(k);
+      if(raw==null||raw==='') continue;
+      let parsed; try{ parsed=JSON.parse(raw); }catch(e){ parsed=raw; }
+      if(Array.isArray(parsed)&&parsed.length===0) continue;
+      entries.push({key:k,value:parsed});
+    }
+  }catch(e){}
+  if(!entries.length) return Promise.resolve();
+  return fetch('/api/public/state',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({entries:entries})
+  }).catch(function(){});
+}
 async function cloudHydrate(){
   if(__cloudOff) return false;
   try{
@@ -1183,6 +1204,7 @@ async function cloudHydrate(){
       const v = state[k];
       __rawSet(k, typeof v==='string' ? v : JSON.stringify(v));
     });
+    try{ await cloudUploadLocalOnly(state); }catch(e){}
     return true;
   }catch(e){ return false; }
 }
@@ -1212,18 +1234,11 @@ function localLogin(payload){
   if(c.status==='suspended') return {ok:false,error:'This account is suspended. Contact your mentor.'};
   return {ok:true,token:'local-client',account:c};
 }
-/* Login always resolves locally first so it works with or without a server.
-   When a server is present we still notify it, but never block the user on it. */
+/* Accounts live in the shared online store, which is pulled in before every
+   login attempt, so signing in works from any device. */
 async function cloudLogin(payload){
-  const local=localLogin(payload);
-  try{
-    if(!__cloudOff) fetch('/api/public/auth/login',{
-      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-    }).then(function(r){ return r.json(); }).then(function(res){
-      if(res&&res.ok) cloudStoreSession(res);
-    }).catch(function(){});
-  }catch(e){}
-  return local;
+  try{ await cloudHydrate(); }catch(e){}
+  return localLogin(payload);
 }
 function cloudStoreSession(res){
   if(res&&res.token) __rawSet('raToken', res.token);

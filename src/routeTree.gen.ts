@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicCalendarRouteImport } from './routes/api/public/calendar'
+import { Route as ApiPublicStateRouteImport } from './routes/api/public/state'
 import { Route as ApiPublicVisionScanRouteImport } from './routes/api/public/vision-scan'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const ApiPublicCalendarRoute = ApiPublicCalendarRouteImport.update({
   path: '/api/public/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicStateRoute = ApiPublicStateRouteImport.update({
+  id: '/api/public/state',
+  path: '/api/public/state',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicVisionScanRoute = ApiPublicVisionScanRouteImport.update({
   id: '/api/public/vision-scan',
   path: '/api/public/vision-scan',
@@ -32,30 +38,47 @@ const ApiPublicVisionScanRoute = ApiPublicVisionScanRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/public/calendar': typeof ApiPublicCalendarRoute
+  '/api/public/state': typeof ApiPublicStateRoute
   '/api/public/vision-scan': typeof ApiPublicVisionScanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/public/calendar': typeof ApiPublicCalendarRoute
+  '/api/public/state': typeof ApiPublicStateRoute
   '/api/public/vision-scan': typeof ApiPublicVisionScanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/public/calendar': typeof ApiPublicCalendarRoute
+  '/api/public/state': typeof ApiPublicStateRoute
   '/api/public/vision-scan': typeof ApiPublicVisionScanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/calendar' | '/api/public/vision-scan'
+  fullPaths:
+    | '/'
+    | '/api/public/calendar'
+    | '/api/public/state'
+    | '/api/public/vision-scan'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/calendar' | '/api/public/vision-scan'
-  id: '__root__' | '/' | '/api/public/calendar' | '/api/public/vision-scan'
+  to:
+    | '/'
+    | '/api/public/calendar'
+    | '/api/public/state'
+    | '/api/public/vision-scan'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/public/calendar'
+    | '/api/public/state'
+    | '/api/public/vision-scan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiPublicCalendarRoute: typeof ApiPublicCalendarRoute
+  ApiPublicStateRoute: typeof ApiPublicStateRoute
   ApiPublicVisionScanRoute: typeof ApiPublicVisionScanRoute
 }
 
@@ -75,6 +98,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/state': {
+      id: '/api/public/state'
+      path: '/api/public/state'
+      fullPath: '/api/public/state'
+      preLoaderRoute: typeof ApiPublicStateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/vision-scan': {
       id: '/api/public/vision-scan'
       path: '/api/public/vision-scan'
@@ -88,6 +118,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiPublicCalendarRoute: ApiPublicCalendarRoute,
+  ApiPublicStateRoute: ApiPublicStateRoute,
   ApiPublicVisionScanRoute: ApiPublicVisionScanRoute,
 }
 export const routeTree = rootRouteImport
